@@ -1,5 +1,8 @@
-# This is used by Hugging Spaces hosting 
-
-opencv-python==4.6.0.66
+# Used by Hugging Face Spaces and Render/Fly/Railway deployments.
+# opencv-python-headless has no GUI deps (libGL, libSM, ...) so it works
+# on stock server images. The Python API is identical to opencv-python.
+opencv-python-headless==4.6.0.66
 scipy==1.11.4
 python-polylabel==0.6
+gradio==4.25.0
+numpy
