@@ -42,4 +42,12 @@ default_config = {
     "font_size": 1,
     "font_color": (140, 140, 140),
     "font_thickness": 2,
+
+    # ----- Pixel-grid mode (see colorbynumber/pixel_grid.py) -----
+    # Number of cells along the longest side of the grid.
+    "pixel_grid_max_dim": 48,
+    # Pixel size of each grid cell in the rendered output image.
+    "pixel_cell_size": 30,
+    # Whether to draw gridlines between cells.
+    "pixel_show_grid": True,
 }

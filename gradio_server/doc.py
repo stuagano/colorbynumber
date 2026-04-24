@@ -30,6 +30,22 @@ def denoise_block_header():
     (e.g. Grid image in above example).
     """
 
+def output_style_block():
+    return """
+    ---
+    ## Output style
+    **Islands**: free-form regions of color, the original style.
+    **Pixel grid**: pixel-art style — the image is downsampled to a grid of
+    square cells, each labeled with a color number. Great for cross-stitch,
+    bead patterns, or just a chunky pixel-art coloring page.
+    """
+
+def pixel_grid_parameters():
+    return """
+    ## Pixel Grid
+    Tune the resolution and look of the pixel-art grid.
+    """
+
 def simplify_islands_parameters():
     return """
     ## Simplify Islands
