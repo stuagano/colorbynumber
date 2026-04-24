@@ -66,3 +66,13 @@ numbered = obj.create_color_by_number()  # the printable color-by-number grid
 preview  = obj.filled_image              # answer-key pixel-art preview
 legend   = obj.generate_color_legend()
 ```
+
+## Deploying to Render
+
+This repo ships a `render.yaml` blueprint so the Gradio app can run as a free Render web service.
+
+1. Push this branch (or `main`) to GitHub.
+2. In Render, **New → Blueprint** and point it at this repo.
+3. Render reads `render.yaml`, installs `requirements.txt`, and runs `python app.py`. Gradio binds to `0.0.0.0` on the `$PORT` Render provides.
+
+No secrets, no API keys. The free plan sleeps after inactivity, so the first request after idle will be a cold start.

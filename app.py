@@ -1,3 +1,5 @@
+import os
+
 import gradio as gr
 
 from colorbynumber.config import default_config
@@ -325,4 +327,9 @@ with gr.Blocks(title = "Color by number") as demo:
                 outputs = color_by_number_image
             )
 
-demo.launch()
+if __name__ == "__main__":
+    # Render / Fly / Railway / any PaaS sets $PORT; fall back to Gradio's default.
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=int(os.environ.get("PORT", 7860)),
+    )
