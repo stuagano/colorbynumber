@@ -70,7 +70,7 @@ with gr.Blocks(title = "Color by number") as demo:
                     pixel_grid_max_dim = gr.Slider(
                         label="Grid resolution (cells along longest side)",
                         minimum=8,
-                        maximum=200,
+                        maximum=100,
                         step=1,
                         value=default_config["pixel_grid_max_dim"],
                         info="Higher = more detail, but more cells to color."
