@@ -118,7 +118,7 @@ with gr.Blocks(title = "Color by number") as demo:
                                 blur_size = gr.Slider(
                                     label = "Blur size",
                                     minimum = 3,
-                                    maximum = 101,
+                                    maximum = 100,
                                     step=2,
                                     value = default_config["blur_size"],
                                     info="Larger values will denoise more",
@@ -126,6 +126,8 @@ with gr.Blocks(title = "Color by number") as demo:
                                     )
                                 denoise_h = gr.Slider(
                                     label = "h",
+                                    minimum = 0,
+                                    maximum = 500,
                                     value = default_config["denoise_h"],
                                     info="Larger values will denoise more",
                                     visible=show_denoise_h
