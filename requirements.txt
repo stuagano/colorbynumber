@@ -4,6 +4,7 @@
 opencv-python-headless==4.6.0.66
 scipy==1.11.4
 python-polylabel==0.6
-gradio==4.44.0
-huggingface_hub==0.24.7
-numpy
+# Gradio 5.x is required: 4.44.0 breaks against current pydantic/starlette/jinja2
+# releases (gradio_client schema bug, jinja2 cache key crash, etc.).
+gradio==5.49.1
+numpy<2
