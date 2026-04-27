@@ -16,7 +16,7 @@ default_config = {
     # Size of the kernel used for gaussian blur.
     "blur_size": 51,
     # h parameter for fastNlMeansDenoisingColored.
-    "denoise_h": 200,
+    "denoise_h": 80,
 
     # Padding around the borders of the image.
     "border_padding": 2,
