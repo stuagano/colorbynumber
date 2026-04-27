@@ -1,14 +1,14 @@
 import os
 
-# Patch gradio_client bug: get_type() crashes when schema is a bool
+# Patch gradio_client bug: schema functions crash when schema is a bool
 # (from additionalProperties: true in gr.State's JSON schema).
 import gradio_client.utils as _gc_utils
-_original_get_type = _gc_utils.get_type
-def _safe_get_type(schema):
+_orig_inner = _gc_utils._json_schema_to_python_type
+def _safe_inner(schema, defs=None):
     if isinstance(schema, bool):
-        return "bool"
-    return _original_get_type(schema)
-_gc_utils.get_type = _safe_get_type
+        return "Any"
+    return _orig_inner(schema, defs)
+_gc_utils._json_schema_to_python_type = _safe_inner
 
 import gradio as gr
 
