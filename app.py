@@ -1,18 +1,5 @@
 import os
 
-# Patch jinja2 LRUCache to handle unhashable cache keys (dict globals).
-# Newer jinja2 versions include a dict in template cache keys, which is
-# unhashable and crashes on lookup. This catches the TypeError and falls
-# back to a cache miss, so the template is simply loaded fresh.
-import jinja2.utils
-_original_lru_get = jinja2.utils.LRUCache.get
-def _safe_lru_get(self, key, default=None):
-    try:
-        return _original_lru_get(self, key, default)
-    except TypeError:
-        return default
-jinja2.utils.LRUCache.get = _safe_lru_get
-
 import gradio as gr
 
 from colorbynumber.config import default_config
