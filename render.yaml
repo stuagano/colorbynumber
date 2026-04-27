@@ -3,7 +3,7 @@ services:
     name: color-by-number
     runtime: python
     plan: free
-    buildCommand: pip install --force-reinstall --no-cache-dir -r requirements.txt
+    buildCommand: pip install --no-cache-dir -r requirements.txt && pip install jinja2==3.1.2
     startCommand: python app.py
     envVars:
       - key: PYTHON_VERSION
