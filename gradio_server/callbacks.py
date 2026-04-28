@@ -1,7 +1,21 @@
+import numpy as np
+
 from colorbynumber.config import default_config
 from colorbynumber.main import ColorByNumber
 from colorbynumber.numbered_islands import add_numbers_to_image
 from colorbynumber.pixel_grid import PixelColorByNumber
+
+
+def _combine_grid_and_legend(grid, legend, padding=40):
+    """Stack the coloring grid and legend vertically into one printable image."""
+    gh, gw = grid.shape[:2]
+    lh, lw = legend.shape[:2]
+    width = max(gw, lw)
+    combined = np.ones((gh + padding + lh, width, 3), dtype=np.uint8) * 255
+    # Centre each horizontally
+    combined[:gh, (width - gw) // 2 : (width - gw) // 2 + gw] = grid
+    combined[gh + padding : gh + padding + lh, (width - lw) // 2 : (width - lw) // 2 + lw] = legend
+    return combined
 
 
 def _hex_to_rgb(hex_color):
@@ -49,12 +63,13 @@ def get_color_by_number(image_path, number_of_colors,
         )
 
     numbered_islands = colorbynumber_obj.create_color_by_number()
+    legend = colorbynumber_obj.generate_color_legend()
+    combined = _combine_grid_and_legend(numbered_islands, legend)
     data = {
         "centroid_coords_list": colorbynumber_obj.centroid_coords_list,
         "color_id_list": [color_id for color_id, _ in colorbynumber_obj.island_borders_list]
     }
-    return numbered_islands, \
-        colorbynumber_obj.generate_color_legend(), \
+    return combined, \
         colorbynumber_obj.simplified_image, \
         colorbynumber_obj.islands_image, \
         data
@@ -118,6 +133,7 @@ def get_pixel_grid_color_by_number(
 
     numbered = obj.create_color_by_number()
     legend = obj.generate_color_legend()
+    combined = _combine_grid_and_legend(numbered, legend)
 
     data = {
         "mode": "pixel_grid",
@@ -126,7 +142,7 @@ def get_pixel_grid_color_by_number(
         "cell_size": int(pixel_cell_size),
         "show_grid": bool(pixel_show_grid),
     }
-    return numbered, legend, obj.filled_image, obj.blank_grid_image, data
+    return combined, obj.filled_image, obj.blank_grid_image, data
 
 
 def change_pixel_grid_font(data, cell_size, font_color, font_thickness):

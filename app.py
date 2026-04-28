@@ -207,7 +207,7 @@ with gr.Blocks(title = "Color by number") as demo:
 
         # Outputs
         with gr.Column():
-            color_by_number_image = gr.Image(label = "Color by number")
+            color_by_number_image = gr.Image(label = "Color by number (with legend)")
 
             # Edit coloring page
             with gr.Row():
@@ -229,7 +229,6 @@ with gr.Blocks(title = "Color by number") as demo:
                     value = "#8c8c8c",
                     visible=False,
                     )
-            legend_image = gr.Image(label = "Legend")
             simplified_image = gr.Image(label = "Simplified image")
             islands_image = gr.Image(label = "Islands (no numbers)", visible=False)
             data = gr.State() # To store the data for font change
@@ -311,7 +310,7 @@ with gr.Blocks(title = "Color by number") as demo:
                 pixel_show_grid,
                 *color_pickers,
             ],
-            outputs=[color_by_number_image, legend_image, simplified_image, islands_image, data],
+            outputs=[color_by_number_image, simplified_image, islands_image, data],
         )
 
         # ---- Live font/grid edits ----
