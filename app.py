@@ -46,6 +46,12 @@ with gr.Blocks(title = "Color by number") as demo:
                 info="More colors = more detail but harder to color.",
             )
 
+            title = gr.Textbox(
+                label="Title (optional)",
+                placeholder="e.g. Macaw - by Sarah",
+                info="Printed between the grid and the legend.",
+            )
+
             is_automatic_colors = gr.Checkbox(label="Automatic colors", value=True)
 
             # Manual color pickers (hidden by default)
@@ -156,6 +162,7 @@ with gr.Blocks(title = "Color by number") as demo:
         style,
         image_path, number_of_colors,
         is_automatic_colors, num_colors,
+        title,
         denoise_flag, denoise_order, denoise_type,
         blur_size, denoise_h,
         open_kernel_size, area_perc_threshold,
@@ -175,6 +182,7 @@ with gr.Blocks(title = "Color by number") as demo:
                 pixel_show_grid,
                 font_color,
                 font_thickness,
+                title,
                 *color_list,
             )
         return callbacks.get_color_by_number(
@@ -185,6 +193,7 @@ with gr.Blocks(title = "Color by number") as demo:
             open_kernel_size, area_perc_threshold,
             check_shape_validity, arc_length_area_ratio_threshold,
             font_size, font_color, font_thickness,
+            title,
             *color_list,
         )
 
@@ -196,6 +205,7 @@ with gr.Blocks(title = "Color by number") as demo:
             number_of_colors,
             is_automatic_colors,
             number_of_colors,
+            title,
             denoise_flag,
             denoise_order,
             denoise_type,

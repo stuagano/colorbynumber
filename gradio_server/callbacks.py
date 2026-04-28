@@ -1,3 +1,4 @@
+import cv2 as cv
 import numpy as np
 
 from colorbynumber.config import default_config
@@ -6,15 +7,46 @@ from colorbynumber.numbered_islands import add_numbers_to_image
 from colorbynumber.pixel_grid import PixelColorByNumber
 
 
-def _combine_grid_and_legend(grid, legend, padding=40):
-    """Stack the coloring grid and legend vertically into one printable image."""
+def _render_title(text, width, font_scale=1.5, thickness=2):
+    """Render a title string centred on a white strip matching `width`."""
+    if not text or not text.strip():
+        return None
+    font = cv.FONT_HERSHEY_SIMPLEX
+    (tw, th), baseline = cv.getTextSize(text.strip(), font, font_scale, thickness)
+    # Auto-shrink if title is wider than the image
+    while tw > width - 40 and font_scale > 0.4:
+        font_scale -= 0.1
+        (tw, th), baseline = cv.getTextSize(text.strip(), font, font_scale, thickness)
+    strip_h = th + baseline + 40  # padding above and below
+    strip = np.ones((strip_h, width, 3), dtype=np.uint8) * 255
+    x = (width - tw) // 2
+    y = 20 + th
+    cv.putText(strip, text.strip(), (x, y), font, font_scale, (0, 0, 0), thickness, cv.LINE_AA)
+    return strip
+
+
+def _combine_grid_and_legend(grid, legend, title=None, padding=30):
+    """Stack the coloring grid, title, and legend vertically into one printable image."""
     gh, gw = grid.shape[:2]
     lh, lw = legend.shape[:2]
     width = max(gw, lw)
-    combined = np.ones((gh + padding + lh, width, 3), dtype=np.uint8) * 255
-    # Centre each horizontally
-    combined[:gh, (width - gw) // 2 : (width - gw) // 2 + gw] = grid
-    combined[gh + padding : gh + padding + lh, (width - lw) // 2 : (width - lw) // 2 + lw] = legend
+
+    parts = [grid]
+    if title and title.strip():
+        title_strip = _render_title(title, width)
+        if title_strip is not None:
+            parts.append(title_strip)
+    parts.append(legend)
+
+    # Stack all parts with padding between them
+    total_h = sum(p.shape[0] for p in parts) + padding * (len(parts) - 1)
+    combined = np.ones((total_h, width, 3), dtype=np.uint8) * 255
+    y = 0
+    for i, part in enumerate(parts):
+        ph, pw = part.shape[:2]
+        x_offset = (width - pw) // 2
+        combined[y:y + ph, x_offset:x_offset + pw] = part
+        y += ph + padding
     return combined
 
 
@@ -29,6 +61,7 @@ def get_color_by_number(image_path, number_of_colors,
                         open_kernel_size, area_perc_threshold,
                         check_shape_validity, arc_length_area_ratio_threshold,
                         font_size, font_color, font_thickness,
+                        title,
                         *color_list):
     # Convert each color to r,g,b tuple
     color_list = color_list[:num_colors]
@@ -63,8 +96,9 @@ def get_color_by_number(image_path, number_of_colors,
         )
 
     numbered_islands = colorbynumber_obj.create_color_by_number()
-    legend = colorbynumber_obj.generate_color_legend()
-    combined = _combine_grid_and_legend(numbered_islands, legend)
+    num_colors = len(colorbynumber_obj.color_list)
+    legend = colorbynumber_obj.generate_color_legend(cols=num_colors)
+    combined = _combine_grid_and_legend(numbered_islands, legend, title=title)
     data = {
         "centroid_coords_list": colorbynumber_obj.centroid_coords_list,
         "color_id_list": [color_id for color_id, _ in colorbynumber_obj.island_borders_list]
@@ -102,6 +136,7 @@ def get_pixel_grid_color_by_number(
     pixel_show_grid,
     font_color,
     font_thickness,
+    title,
     *color_list,
 ):
     """Pixel-grid output style. No island/denoise params used."""
@@ -132,8 +167,9 @@ def get_pixel_grid_color_by_number(
         )
 
     numbered = obj.create_color_by_number()
-    legend = obj.generate_color_legend()
-    combined = _combine_grid_and_legend(numbered, legend)
+    num_colors = len(obj.color_list)
+    legend = obj.generate_color_legend(cols=num_colors)
+    combined = _combine_grid_and_legend(numbered, legend, title=title)
 
     data = {
         "mode": "pixel_grid",
