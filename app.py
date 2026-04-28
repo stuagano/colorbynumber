@@ -32,8 +32,8 @@ with gr.Blocks(title = "Color by number") as demo:
 
             output_style = gr.Radio(
                 label="Output style",
-                choices=["Islands", "Pixel grid"],
-                value="Islands",
+                choices=["Pixel grid", "Islands"],
+                value="Pixel grid",
                 info="Islands: free-form color regions. Pixel grid: square cells like cross-stitch.",
             )
 
@@ -79,7 +79,7 @@ with gr.Blocks(title = "Color by number") as demo:
             # Advanced settings — collapsed by default
             with gr.Accordion(label="Advanced settings", open=False):
                 # Pixel grid options
-                with gr.Group(visible=False) as pixel_grid_group:
+                with gr.Group(visible=True) as pixel_grid_group:
                     pixel_grid_max_dim = gr.Slider(
                         label="Grid resolution (cells along longest side)",
                         minimum=8,
@@ -94,7 +94,7 @@ with gr.Blocks(title = "Color by number") as demo:
                     )
 
                 # Islands options
-                with gr.Group(visible=True) as islands_group:
+                with gr.Group(visible=False) as islands_group:
                     denoise_flag = gr.Checkbox(
                         label="Denoise image",
                         value=default_config["denoise"],
@@ -135,7 +135,7 @@ with gr.Blocks(title = "Color by number") as demo:
             simplified_image = gr.Image(label="Simplified image")
             islands_image = gr.Image(label="Islands (no numbers)", visible=False)
             data = gr.State()
-            current_mode = gr.State(value="Islands")
+            current_mode = gr.State(value="Pixel grid")
 
     # ---- Output-style switching ----
     def _switch_output_style(style):
