@@ -25,29 +25,64 @@ def _render_title(text, width, font_scale=1.5, thickness=2):
     return strip
 
 
-def _combine_grid_and_legend(grid, legend, title=None, padding=30):
-    """Stack the coloring grid, title, and legend vertically into one printable image."""
+def _resize_to_width(image, target_width):
+    """Resize an image to a target width, preserving aspect ratio."""
+    h, w = image.shape[:2]
+    if w == target_width:
+        return image
+    target_h = max(1, int(round(h * (target_width / w))))
+    return cv.resize(image, (target_width, target_h), interpolation=cv.INTER_AREA)
+
+
+def _combine_grid_and_legend(grid, legend, title=None, thumbnail=None, padding=30):
+    """Compose the deliverable: grid on top, footer below with title+legend on
+    the left and an optional colored thumbnail on the right."""
     gh, gw = grid.shape[:2]
     lh, lw = legend.shape[:2]
-    width = max(gw, lw)
 
-    parts = [grid]
-    if title and title.strip():
-        title_strip = _render_title(title, width)
-        if title_strip is not None:
-            parts.append(title_strip)
-    parts.append(legend)
+    if thumbnail is not None:
+        thumb_w = min(thumbnail.shape[1], max(200, gw // 4))
+        thumb = _resize_to_width(thumbnail, thumb_w)
+        th, tw = thumb.shape[:2]
+    else:
+        thumb = None
+        th = tw = 0
 
-    # Stack all parts with padding between them
-    total_h = sum(p.shape[0] for p in parts) + padding * (len(parts) - 1)
-    combined = np.ones((total_h, width, 3), dtype=np.uint8) * 255
-    y = 0
-    for i, part in enumerate(parts):
-        ph, pw = part.shape[:2]
-        x_offset = (width - pw) // 2
-        combined[y:y + ph, x_offset:x_offset + pw] = part
-        y += ph + padding
-    return combined
+    title_strip = _render_title(title, lw) if title and title.strip() else None
+
+    left_h = lh + (title_strip.shape[0] + padding if title_strip is not None else 0)
+    left_w = lw
+
+    if thumb is not None:
+        footer_w = left_w + padding * 2 + tw
+        footer_h = max(left_h, th)
+    else:
+        footer_w = left_w
+        footer_h = left_h
+
+    width = max(gw, footer_w)
+    total_h = gh + padding + footer_h
+    canvas = np.ones((total_h, width, 3), dtype=np.uint8) * 255
+
+    grid_x = (width - gw) // 2
+    canvas[:gh, grid_x:grid_x + gw] = grid
+
+    footer_x = (width - footer_w) // 2
+    footer_y = gh + padding
+
+    y = footer_y + (footer_h - left_h) // 2
+    if title_strip is not None:
+        ts_h, ts_w = title_strip.shape[:2]
+        canvas[y:y + ts_h, footer_x:footer_x + ts_w] = title_strip
+        y += ts_h + padding
+    canvas[y:y + lh, footer_x:footer_x + lw] = legend
+
+    if thumb is not None:
+        thumb_x = footer_x + left_w + padding * 2
+        thumb_y = footer_y + (footer_h - th) // 2
+        canvas[thumb_y:thumb_y + th, thumb_x:thumb_x + tw] = thumb
+
+    return canvas
 
 
 def _hex_to_rgb(hex_color):
@@ -98,7 +133,12 @@ def get_color_by_number(image_path, number_of_colors,
     numbered_islands = colorbynumber_obj.create_color_by_number()
     num_colors = len(colorbynumber_obj.color_list)
     legend = colorbynumber_obj.generate_color_legend(cols=num_colors)
-    combined = _combine_grid_and_legend(numbered_islands, legend, title=title)
+    combined = _combine_grid_and_legend(
+        numbered_islands,
+        legend,
+        title=title,
+        thumbnail=colorbynumber_obj.simplified_image,
+    )
     data = {
         "centroid_coords_list": colorbynumber_obj.centroid_coords_list,
         "color_id_list": [color_id for color_id, _ in colorbynumber_obj.island_borders_list]
@@ -169,7 +209,12 @@ def get_pixel_grid_color_by_number(
     numbered = obj.create_color_by_number()
     num_colors = len(obj.color_list)
     legend = obj.generate_color_legend(cols=num_colors)
-    combined = _combine_grid_and_legend(numbered, legend, title=title)
+    combined = _combine_grid_and_legend(
+        numbered,
+        legend,
+        title=title,
+        thumbnail=obj.filled_image,
+    )
 
     data = {
         "mode": "pixel_grid",

@@ -138,7 +138,7 @@ with gr.Blocks(title = "Color by number") as demo:
         # Outputs
         with gr.Column():
             color_by_number_image = gr.Image(label="Color by number (with legend)")
-            simplified_image = gr.Image(label="Simplified image")
+            simplified_image = gr.Image(label="Simplified image", visible=False)
             islands_image = gr.Image(label="Islands (no numbers)", visible=False)
             data = gr.State()
             current_mode = gr.State(value="Pixel grid")
