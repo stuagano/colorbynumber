@@ -56,6 +56,12 @@ class ColorByNumber:
             border_color = self.config["border_color"]
             )
 
+        # Compute island areas for auto font scaling
+        island_areas = []
+        for _, island_coordinates in self.island_borders_list:
+            rows, cols = island_coordinates
+            island_areas.append(len(rows))
+
         # Add numbers to the islands image
         self.numbered_islands = add_numbers_to_image(
             image=self.islands_image,
@@ -63,7 +69,8 @@ class ColorByNumber:
             color_id_list=[color_id for color_id, _ in self.island_borders_list],
             font_size=self.config["font_size"],
             font_color=self.config["font_color"],
-            font_thickness=self.config["font_thickness"]
+            font_thickness=self.config["font_thickness"],
+            island_areas=island_areas,
             )
 
         return self.numbered_islands

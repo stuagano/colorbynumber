@@ -38,30 +38,53 @@ def _add_text_to_image(image, text, position, font_size, font_color, font_thickn
         )
 
 
-def add_numbers_to_image(image, 
-                         centroid_coords_list, color_id_list, 
-                         font_size, font_color, font_thickness):
+def _auto_font_scale_for_island(island_area, num_digits, image_area):
+    """Pick a font scale that fits the number inside the island."""
+    # Estimate island "diameter" from area
+    diameter = np.sqrt(island_area)
+    # Target ~40% of the diameter for text width
+    target_width = diameter * 0.4
+    # cv2.FONT_HERSHEY_SIMPLEX glyphs at scale=1 are ~22px wide
+    glyph_width = 22 * num_digits
+    scale = max(0.25, target_width / glyph_width)
+    # Cap at a reasonable maximum
+    return min(scale, 3.0)
+
+
+def add_numbers_to_image(image,
+                         centroid_coords_list, color_id_list,
+                         font_size, font_color, font_thickness,
+                         island_areas=None):
     """Add numbers to the image.
-    
+
     Args:
         image (np.array): Numpy image.
         centroid_coords_list (list): A list of centroid coordinates for the islands.
         color_id_list (list): A list of color ids.
+        island_areas (list): Optional list of island pixel areas for auto-scaling.
     Returns:
         np.array: A new image with the numbers added.
     """
     numbered_islands = image.copy()
+    image_area = image.shape[0] * image.shape[1]
     for idx in range(len(centroid_coords_list)):
         centroid = centroid_coords_list[idx]
         color_id = color_id_list[idx]
         if not np.isnan(centroid).any():
+            text = str(color_id)
+            if island_areas is not None:
+                fs = _auto_font_scale_for_island(island_areas[idx], len(text), image_area)
+                ft = max(1, round(fs))
+            else:
+                fs = font_size
+                ft = font_thickness
             numbered_islands = _add_text_to_image(
-                image=numbered_islands, 
-                text=str(color_id), 
+                image=numbered_islands,
+                text=text,
                 position=centroid,
-                font_size=font_size,
+                font_size=fs,
                 font_color=font_color,
-                font_thickness=font_thickness
+                font_thickness=ft
             )
     return numbered_islands
 
