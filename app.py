@@ -21,7 +21,12 @@ with gr.Blocks(title = "Color by number") as demo:
     with gr.Row():
         # Inputs
         with gr.Column():
-            image_path = gr.Image(type="filepath")
+            image_path = gr.ImageEditor(
+                type="filepath",
+                label="Upload image — use the crop tool to focus on the detail you want",
+                sources=["upload", "clipboard"],
+                transforms=["crop"],
+            )
             image_examples = gr.Examples(
                 examples=[
                     ["ExampleImages/Macaw.jpeg"],
@@ -158,6 +163,13 @@ with gr.Blocks(title = "Color by number") as demo:
     )
 
     # ---- Submit dispatch ----
+    def _resolve_image_path(value):
+        """gr.ImageEditor returns {'background', 'layers', 'composite'}; pick
+        the cropped composite (falls back to background or the raw path)."""
+        if isinstance(value, dict):
+            return value.get("composite") or value.get("background")
+        return value
+
     def _on_submit(
         style,
         image_path, number_of_colors,
@@ -171,6 +183,7 @@ with gr.Blocks(title = "Color by number") as demo:
         pixel_grid_max_dim, pixel_cell_size, pixel_show_grid,
         *color_list,
     ):
+        image_path = _resolve_image_path(image_path)
         if style == "Pixel grid":
             return callbacks.get_pixel_grid_color_by_number(
                 image_path,
