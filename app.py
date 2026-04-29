@@ -90,6 +90,18 @@ with gr.Blocks(title = "Color by number") as demo:
                 info="Printed between the grid and the legend.",
             )
 
+            with gr.Row():
+                paper_size = gr.Radio(
+                    label="Paper",
+                    choices=["Letter", "A4"],
+                    value="Letter",
+                )
+                orientation = gr.Radio(
+                    label="Orientation",
+                    choices=["Portrait", "Landscape"],
+                    value="Portrait",
+                )
+
             is_automatic_colors = gr.Checkbox(label="Automatic colors", value=True)
 
             # Manual color pickers (hidden by default)
@@ -209,6 +221,7 @@ with gr.Blocks(title = "Color by number") as demo:
         is_automatic_colors, num_colors,
         title,
         crop_left, crop_top, crop_right, crop_bottom, background_blur,
+        paper_size, orientation,
         denoise_flag, denoise_order, denoise_type,
         blur_size, denoise_h,
         open_kernel_size, area_perc_threshold,
@@ -220,6 +233,8 @@ with gr.Blocks(title = "Color by number") as demo:
         image_path = callbacks.apply_crop_to_path(
             image_path, crop_left, crop_top, crop_right, crop_bottom, background_blur
         )
+        paper = (paper_size or "Letter").lower()
+        orient = (orientation or "Portrait").lower()
         if style == "Pixel grid":
             return callbacks.get_pixel_grid_color_by_number(
                 image_path,
@@ -232,6 +247,8 @@ with gr.Blocks(title = "Color by number") as demo:
                 font_color,
                 font_thickness,
                 title,
+                paper,
+                orient,
                 *color_list,
             )
         return callbacks.get_color_by_number(
@@ -243,6 +260,8 @@ with gr.Blocks(title = "Color by number") as demo:
             check_shape_validity, arc_length_area_ratio_threshold,
             font_size, font_color, font_thickness,
             title,
+            paper,
+            orient,
             *color_list,
         )
 
@@ -260,6 +279,8 @@ with gr.Blocks(title = "Color by number") as demo:
             crop_right,
             crop_bottom,
             background_blur,
+            paper_size,
+            orientation,
             denoise_flag,
             denoise_order,
             denoise_type,

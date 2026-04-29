@@ -136,11 +136,20 @@ class ColorByNumber:
             image[start_row:end_row, start_col] = border_color # Left Border
             image[start_row:end_row, end_col] = border_color # Right Border
 
-            # Draw text label below the square
+            # Draw the color number below the square
             text = str(i + 1)
             text_size, _ = cv.getTextSize(text, font, font_size, 1)
             text_row = (end_row + text_size[1]) + 5
             text_col = start_col + (square_size // 2) - (text_size[0] // 2)
             cv.putText(image, text, (text_col, text_row), font, font_size, (0, 0, 0), 1)
+
+            # Draw the hex code below the number for paint/marker matching
+            r, g, b = (int(v) for v in color)
+            hex_text = f"#{r:02X}{g:02X}{b:02X}"
+            hex_scale = font_size * 0.45
+            hex_size, _ = cv.getTextSize(hex_text, font, hex_scale, 1)
+            hex_row = text_row + hex_size[1] + 6
+            hex_col = start_col + (square_size // 2) - (hex_size[0] // 2)
+            cv.putText(image, hex_text, (hex_col, hex_row), font, hex_scale, (90, 90, 90), 1, cv.LINE_AA)
 
         return image

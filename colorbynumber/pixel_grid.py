@@ -179,6 +179,14 @@ def generate_color_legend(
         text_col = start_col + (square_size // 2) - (text_size[0] // 2)
         cv.putText(image, text, (text_col, text_row), font, font_size, (0, 0, 0), 1)
 
+        r, g, b = (int(v) for v in color)
+        hex_text = f"#{r:02X}{g:02X}{b:02X}"
+        hex_scale = font_size * 0.45
+        hex_size, _ = cv.getTextSize(hex_text, font, hex_scale, 1)
+        hex_row = text_row + hex_size[1] + 6
+        hex_col = start_col + (square_size // 2) - (hex_size[0] // 2)
+        cv.putText(image, hex_text, (hex_col, hex_row), font, hex_scale, (90, 90, 90), 1, cv.LINE_AA)
+
     return image
 
 

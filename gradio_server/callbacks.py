@@ -191,14 +191,17 @@ def scan_image(image_path, grid_max_dim, left, top, right, bottom):
     return "\n".join(lines)
 
 
-def save_as_pdf(image_array, paper_size="letter", margin_in=0.5):
+def save_as_pdf(image_array, paper_size="letter", orientation="portrait", margin_in=0.5):
     """Render the deliverable image to a single-page PDF and return the path."""
     from PIL import Image
 
-    if paper_size == "a4":
+    paper = (paper_size or "letter").lower()
+    if paper == "a4":
         page_w_in, page_h_in = 8.27, 11.69
     else:
         page_w_in, page_h_in = 8.5, 11.0
+    if (orientation or "portrait").lower() == "landscape":
+        page_w_in, page_h_in = page_h_in, page_w_in
     dpi = 300
     page_w = int(page_w_in * dpi)
     page_h = int(page_h_in * dpi)
@@ -311,6 +314,7 @@ def get_color_by_number(image_path, number_of_colors,
                         check_shape_validity, arc_length_area_ratio_threshold,
                         font_size, font_color, font_thickness,
                         title,
+                        paper_size="letter", orientation="portrait",
                         *color_list):
     # Convert each color to r,g,b tuple
     color_list = color_list[:num_colors]
@@ -357,7 +361,7 @@ def get_color_by_number(image_path, number_of_colors,
         "centroid_coords_list": colorbynumber_obj.centroid_coords_list,
         "color_id_list": [color_id for color_id, _ in colorbynumber_obj.island_borders_list]
     }
-    pdf_path = save_as_pdf(combined)
+    pdf_path = save_as_pdf(combined, paper_size=paper_size, orientation=orientation)
     return combined, \
         colorbynumber_obj.simplified_image, \
         colorbynumber_obj.islands_image, \
@@ -393,6 +397,8 @@ def get_pixel_grid_color_by_number(
     font_color,
     font_thickness,
     title,
+    paper_size="letter",
+    orientation="portrait",
     *color_list,
 ):
     """Pixel-grid output style. No island/denoise params used."""
@@ -439,7 +445,7 @@ def get_pixel_grid_color_by_number(
         "cell_size": int(pixel_cell_size),
         "show_grid": bool(pixel_show_grid),
     }
-    pdf_path = save_as_pdf(combined)
+    pdf_path = save_as_pdf(combined, paper_size=paper_size, orientation=orientation)
     return combined, obj.filled_image, obj.blank_grid_image, data, pdf_path
 
 
