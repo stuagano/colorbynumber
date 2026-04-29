@@ -42,6 +42,8 @@ with gr.Blocks(title = "Color by number") as demo:
                     crop_top = gr.Slider(label="Top %", minimum=0, maximum=99, step=1, value=0)
                     crop_bottom = gr.Slider(label="Bottom %", minimum=1, maximum=100, step=1, value=100)
                 crop_preview = gr.Image(label="Crop preview", interactive=False)
+                scan_button = gr.Button("Scan image for rendering issues")
+                scan_results = gr.Markdown(visible=True)
 
                 def _update_crop_preview(path, left, top, right, bottom):
                     if not path:
@@ -168,10 +170,17 @@ with gr.Blocks(title = "Color by number") as demo:
         # Outputs
         with gr.Column():
             color_by_number_image = gr.Image(label="Color by number (with legend)")
+            pdf_download = gr.File(label="Download printable PDF", interactive=False)
             simplified_image = gr.Image(label="Simplified image", visible=False)
             islands_image = gr.Image(label="Islands (no numbers)", visible=False)
             data = gr.State()
             current_mode = gr.State(value="Pixel grid")
+
+    scan_button.click(
+        fn=callbacks.scan_image,
+        inputs=[image_path, pixel_grid_max_dim, crop_left, crop_top, crop_right, crop_bottom],
+        outputs=scan_results,
+    )
 
     # ---- Output-style switching ----
     def _switch_output_style(style):
@@ -261,7 +270,7 @@ with gr.Blocks(title = "Color by number") as demo:
             pixel_show_grid,
             *color_pickers,
         ],
-        outputs=[color_by_number_image, simplified_image, islands_image, data],
+        outputs=[color_by_number_image, simplified_image, islands_image, data, pdf_download],
     )
 
 if __name__ == "__main__":
