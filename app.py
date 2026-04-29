@@ -41,24 +41,30 @@ with gr.Blocks(title = "Color by number") as demo:
                 with gr.Row():
                     crop_top = gr.Slider(label="Top %", minimum=0, maximum=99, step=1, value=0)
                     crop_bottom = gr.Slider(label="Bottom %", minimum=1, maximum=100, step=1, value=100)
+                background_blur = gr.Slider(
+                    label="Background blur",
+                    minimum=0, maximum=100, step=5, value=0,
+                    info="Softens the edges so the palette focuses on the centred subject.",
+                )
                 crop_preview = gr.Image(label="Crop preview", interactive=False)
                 scan_button = gr.Button("Scan image for rendering issues")
                 scan_results = gr.Markdown(value="")
 
-                def _update_crop_preview(path, left, top, right, bottom):
+                def _update_crop_preview(path, left, top, right, bottom, blur):
                     if not path:
                         return None
-                    return callbacks.preview_crop(path, left, top, right, bottom)
+                    return callbacks.preview_crop(path, left, top, right, bottom, blur)
 
-                for slider in (crop_left, crop_top, crop_right, crop_bottom):
+                preview_inputs = [image_path, crop_left, crop_top, crop_right, crop_bottom, background_blur]
+                for slider in (crop_left, crop_top, crop_right, crop_bottom, background_blur):
                     slider.change(
                         fn=_update_crop_preview,
-                        inputs=[image_path, crop_left, crop_top, crop_right, crop_bottom],
+                        inputs=preview_inputs,
                         outputs=crop_preview,
                     )
                 image_path.change(
                     fn=_update_crop_preview,
-                    inputs=[image_path, crop_left, crop_top, crop_right, crop_bottom],
+                    inputs=preview_inputs,
                     outputs=crop_preview,
                 )
 
@@ -202,7 +208,7 @@ with gr.Blocks(title = "Color by number") as demo:
         image_path, number_of_colors,
         is_automatic_colors, num_colors,
         title,
-        crop_left, crop_top, crop_right, crop_bottom,
+        crop_left, crop_top, crop_right, crop_bottom, background_blur,
         denoise_flag, denoise_order, denoise_type,
         blur_size, denoise_h,
         open_kernel_size, area_perc_threshold,
@@ -212,7 +218,7 @@ with gr.Blocks(title = "Color by number") as demo:
         *color_list,
     ):
         image_path = callbacks.apply_crop_to_path(
-            image_path, crop_left, crop_top, crop_right, crop_bottom
+            image_path, crop_left, crop_top, crop_right, crop_bottom, background_blur
         )
         if style == "Pixel grid":
             return callbacks.get_pixel_grid_color_by_number(
@@ -253,6 +259,7 @@ with gr.Blocks(title = "Color by number") as demo:
             crop_top,
             crop_right,
             crop_bottom,
+            background_blur,
             denoise_flag,
             denoise_order,
             denoise_type,

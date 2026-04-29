@@ -39,29 +39,67 @@ def _is_full_crop(left, top, right, bottom):
     return float(left) <= 0 and float(top) <= 0 and float(right) >= 100 and float(bottom) >= 100
 
 
-def preview_crop(image_path, left, top, right, bottom):
-    """Return the cropped region as an RGB array for Gradio preview."""
+def apply_radial_blur(image, strength_pct):
+    """Blur the image radially: center stays sharp, edges soften with strength.
+
+    Pairs with cropping — the user crops the subject to the centre, then this
+    blurs the periphery so k-means doesn't waste palette colours on background
+    texture.
+    """
+    strength = max(0.0, min(100.0, float(strength_pct))) / 100.0
+    if strength <= 0:
+        return image
+    h, w = image.shape[:2]
+    yy, xx = np.indices((h, w), dtype=np.float32)
+    cy, cx = (h - 1) / 2, (w - 1) / 2
+    max_dist = float(np.sqrt(cy * cy + cx * cx))
+    dist = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2) / max(1e-6, max_dist)
+
+    inner = 1.0 - strength  # sharp radius shrinks with strength
+    span = max(1e-3, 1.0 - inner)
+    t = np.clip((dist - inner) / span, 0, 1)
+    t = t * t * (3 - 2 * t)  # smoothstep
+    mask = (1.0 - t)[..., None].astype(np.float32)
+
+    k = max(3, int(min(h, w) * 0.06 * strength)) | 1
+    blurred = cv.GaussianBlur(image, (k, k), 0)
+    out = image.astype(np.float32) * mask + blurred.astype(np.float32) * (1 - mask)
+    return np.clip(out, 0, 255).astype(np.uint8)
+
+
+def preview_crop(image_path, left, top, right, bottom, blur_strength=0):
+    """Return the cropped (and optionally blurred) region for Gradio preview."""
     if not image_path:
         return None
     img = cv.imread(image_path)
     if img is None:
         return None
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-    return _crop_image_pct(img, left, top, right, bottom)
+    img = _crop_image_pct(img, left, top, right, bottom)
+    if float(blur_strength) > 0:
+        img = apply_radial_blur(img, blur_strength)
+    return img
 
 
-def apply_crop_to_path(image_path, left, top, right, bottom):
-    """If a non-trivial crop is set, write the cropped image to a tempfile and
-    return that path; otherwise return the original path."""
-    if not image_path or _is_full_crop(left, top, right, bottom):
+def apply_crop_to_path(image_path, left, top, right, bottom, blur_strength=0):
+    """Apply crop and/or radial blur, write to a tempfile, and return its path.
+    Returns the original path if no preprocessing is needed."""
+    if not image_path:
+        return image_path
+    no_crop = _is_full_crop(left, top, right, bottom)
+    no_blur = float(blur_strength) <= 0
+    if no_crop and no_blur:
         return image_path
     img = cv.imread(image_path)
     if img is None:
         return image_path
-    cropped = _crop_image_pct(img, left, top, right, bottom)
+    if not no_crop:
+        img = _crop_image_pct(img, left, top, right, bottom)
+    if not no_blur:
+        img = apply_radial_blur(img, blur_strength)
     fd, tmp_path = tempfile.mkstemp(suffix=os.path.splitext(image_path)[1] or ".png")
     os.close(fd)
-    cv.imwrite(tmp_path, cropped)
+    cv.imwrite(tmp_path, img)
     return tmp_path
 
 
