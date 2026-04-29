@@ -43,7 +43,7 @@ with gr.Blocks(title = "Color by number") as demo:
                     crop_bottom = gr.Slider(label="Bottom %", minimum=1, maximum=100, step=1, value=100)
                 crop_preview = gr.Image(label="Crop preview", interactive=False)
                 scan_button = gr.Button("Scan image for rendering issues")
-                scan_results = gr.Markdown(visible=True)
+                scan_results = gr.Markdown(value="")
 
                 def _update_crop_preview(path, left, top, right, bottom):
                     if not path:

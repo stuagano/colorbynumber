@@ -84,12 +84,15 @@ def scan_image(image_path, grid_max_dim, left, top, right, bottom):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     issues, ok = [], []
 
-    cascade_path = cv.data.haarcascades + "haarcascade_frontalface_default.xml"
+    faces = []
     try:
-        face_cascade = cv.CascadeClassifier(cascade_path)
-        faces = face_cascade.detectMultiScale(
-            gray, scaleFactor=1.2, minNeighbors=5, minSize=(30, 30)
-        )
+        cascade_dir = getattr(getattr(cv, "data", None), "haarcascades", "")
+        cascade_path = os.path.join(cascade_dir, "haarcascade_frontalface_default.xml")
+        if cascade_dir and os.path.exists(cascade_path):
+            face_cascade = cv.CascadeClassifier(cascade_path)
+            faces = face_cascade.detectMultiScale(
+                gray, scaleFactor=1.2, minNeighbors=5, minSize=(30, 30)
+            )
     except Exception:
         faces = []
 
