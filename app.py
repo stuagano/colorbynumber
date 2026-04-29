@@ -21,12 +21,7 @@ with gr.Blocks(title = "Color by number") as demo:
     with gr.Row():
         # Inputs
         with gr.Column():
-            image_path = gr.ImageEditor(
-                type="filepath",
-                label="Upload image — use the crop tool to focus on the detail you want",
-                sources=["upload", "clipboard"],
-                transforms=["crop"],
-            )
+            image_path = gr.Image(type="filepath")
             image_examples = gr.Examples(
                 examples=[
                     ["ExampleImages/Macaw.jpeg"],
@@ -34,6 +29,36 @@ with gr.Blocks(title = "Color by number") as demo:
                 ],
                 inputs=[image_path]
             )
+
+            with gr.Accordion(label="Crop (optional)", open=False):
+                gr.Markdown(
+                    "Trim the image to the region you want as a color-by-number. "
+                    "Values are percentages of the original image (0–100)."
+                )
+                with gr.Row():
+                    crop_left = gr.Slider(label="Left %", minimum=0, maximum=99, step=1, value=0)
+                    crop_right = gr.Slider(label="Right %", minimum=1, maximum=100, step=1, value=100)
+                with gr.Row():
+                    crop_top = gr.Slider(label="Top %", minimum=0, maximum=99, step=1, value=0)
+                    crop_bottom = gr.Slider(label="Bottom %", minimum=1, maximum=100, step=1, value=100)
+                crop_preview = gr.Image(label="Crop preview", interactive=False)
+
+                def _update_crop_preview(path, left, top, right, bottom):
+                    if not path:
+                        return None
+                    return callbacks.preview_crop(path, left, top, right, bottom)
+
+                for slider in (crop_left, crop_top, crop_right, crop_bottom):
+                    slider.change(
+                        fn=_update_crop_preview,
+                        inputs=[image_path, crop_left, crop_top, crop_right, crop_bottom],
+                        outputs=crop_preview,
+                    )
+                image_path.change(
+                    fn=_update_crop_preview,
+                    inputs=[image_path, crop_left, crop_top, crop_right, crop_bottom],
+                    outputs=crop_preview,
+                )
 
             output_style = gr.Radio(
                 label="Output style",
@@ -163,18 +188,12 @@ with gr.Blocks(title = "Color by number") as demo:
     )
 
     # ---- Submit dispatch ----
-    def _resolve_image_path(value):
-        """gr.ImageEditor returns {'background', 'layers', 'composite'}; pick
-        the cropped composite (falls back to background or the raw path)."""
-        if isinstance(value, dict):
-            return value.get("composite") or value.get("background")
-        return value
-
     def _on_submit(
         style,
         image_path, number_of_colors,
         is_automatic_colors, num_colors,
         title,
+        crop_left, crop_top, crop_right, crop_bottom,
         denoise_flag, denoise_order, denoise_type,
         blur_size, denoise_h,
         open_kernel_size, area_perc_threshold,
@@ -183,7 +202,9 @@ with gr.Blocks(title = "Color by number") as demo:
         pixel_grid_max_dim, pixel_cell_size, pixel_show_grid,
         *color_list,
     ):
-        image_path = _resolve_image_path(image_path)
+        image_path = callbacks.apply_crop_to_path(
+            image_path, crop_left, crop_top, crop_right, crop_bottom
+        )
         if style == "Pixel grid":
             return callbacks.get_pixel_grid_color_by_number(
                 image_path,
@@ -219,6 +240,10 @@ with gr.Blocks(title = "Color by number") as demo:
             is_automatic_colors,
             number_of_colors,
             title,
+            crop_left,
+            crop_top,
+            crop_right,
+            crop_bottom,
             denoise_flag,
             denoise_order,
             denoise_type,

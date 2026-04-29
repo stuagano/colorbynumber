@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 import cv2 as cv
 import numpy as np
 
@@ -5,6 +8,61 @@ from colorbynumber.config import default_config
 from colorbynumber.main import ColorByNumber
 from colorbynumber.numbered_islands import add_numbers_to_image
 from colorbynumber.pixel_grid import PixelColorByNumber
+
+
+def _normalize_crop_box(left, top, right, bottom):
+    """Clamp/normalize crop percentages and ensure left<right, top<bottom."""
+    left = max(0.0, min(99.0, float(left)))
+    top = max(0.0, min(99.0, float(top)))
+    right = max(1.0, min(100.0, float(right)))
+    bottom = max(1.0, min(100.0, float(bottom)))
+    if right <= left:
+        right = min(100.0, left + 1.0)
+    if bottom <= top:
+        bottom = min(100.0, top + 1.0)
+    return left, top, right, bottom
+
+
+def _crop_image_pct(image, left, top, right, bottom):
+    h, w = image.shape[:2]
+    left, top, right, bottom = _normalize_crop_box(left, top, right, bottom)
+    x1 = int(round(w * left / 100))
+    x2 = int(round(w * right / 100))
+    y1 = int(round(h * top / 100))
+    y2 = int(round(h * bottom / 100))
+    x2 = max(x1 + 1, min(w, x2))
+    y2 = max(y1 + 1, min(h, y2))
+    return image[y1:y2, x1:x2]
+
+
+def _is_full_crop(left, top, right, bottom):
+    return float(left) <= 0 and float(top) <= 0 and float(right) >= 100 and float(bottom) >= 100
+
+
+def preview_crop(image_path, left, top, right, bottom):
+    """Return the cropped region as an RGB array for Gradio preview."""
+    if not image_path:
+        return None
+    img = cv.imread(image_path)
+    if img is None:
+        return None
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    return _crop_image_pct(img, left, top, right, bottom)
+
+
+def apply_crop_to_path(image_path, left, top, right, bottom):
+    """If a non-trivial crop is set, write the cropped image to a tempfile and
+    return that path; otherwise return the original path."""
+    if not image_path or _is_full_crop(left, top, right, bottom):
+        return image_path
+    img = cv.imread(image_path)
+    if img is None:
+        return image_path
+    cropped = _crop_image_pct(img, left, top, right, bottom)
+    fd, tmp_path = tempfile.mkstemp(suffix=os.path.splitext(image_path)[1] or ".png")
+    os.close(fd)
+    cv.imwrite(tmp_path, cropped)
+    return tmp_path
 
 
 def _render_title(text, width, font_scale=1.5, thickness=2):
